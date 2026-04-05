@@ -56,6 +56,9 @@ abstract class AppDatabase : RoomDatabase() {
                 BikePart("frame_sw_wc", "S-Works Enduro World Cup", PartType.FRAME, 3800.0, "frame_sworksworldcup"),
                 BikePart("frame_sw_carbon", "S-Works Enduro Carbon", PartType.FRAME, 2400.0, "frame_sworks"),
                 BikePart("frame_sw_alu", "S-Works Enduro Aluminium", PartType.FRAME, 1600.0, "frame_sworksalu"),
+                
+                // Santa Cruz Frames
+                BikePart("frame_sc_hightower", "Santa Cruz Hightower", PartType.FRAME, 3400.0, "frame_santacruz_hightower"),
 
                 // --- FORKS ---
                 BikePart("fork_fox38_f", "Fox 38 Factory Grip2", PartType.FORK, 1250.0, "fork_fox38"),
@@ -83,8 +86,8 @@ abstract class AppDatabase : RoomDatabase() {
                 BikePart("saddle_spank", "Spank Ozy 220 Saddle", PartType.SADDLE, 95.0, "seat_spankozzy220"),
 
                 // --- BOTTOM BRACKETS ---
-                BikePart("bb_sram_dub", "SRAM DUB System", PartType.BOTTOM_BRACKET, 45.0, "sramgroupsetchoice", "DUB"),
-                BikePart("bb_shim_ht2", "Shimano Hollowtech II", PartType.BOTTOM_BRACKET, 35.0, "shimanogroupsetchoice", "HOLLOWTECH"),
+                BikePart("bb_sram_dub", "SRAM DUB System", PartType.BOTTOM_BRACKET, 45.0, "sramgroupset", "DUB"),
+                BikePart("bb_shim_ht2", "Shimano Hollowtech II", PartType.BOTTOM_BRACKET, 35.0, "shimanogroupset", "HOLLOWTECH"),
 
                 // --- SRAM DRIVETRAIN (DUB) ---
                 BikePart("crank_sram_xx1", "SRAM XX1 Eagle Carbon", PartType.CRANKS, 560.0, "crank_sramxx1_carbon", "DUB"),

@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun BrandSelectionScreen(
-    onBrandSelected: () -> Unit // коллбек навигации
+    onBrandSelected: (String) -> Unit // коллбек навигации с передачей бренда
 ) {
     Column(
         modifier = Modifier
@@ -37,11 +37,20 @@ fun BrandSelectionScreen(
 
         Spacer(modifier = Modifier.height(60.dp))
 
-        // единственный доступный бренд
+        // Бренд 1: Specialized
         BrandItem(
             logoName = "logo_specialized",
             brandName = "SPECIALIZED",
-            onClick = onBrandSelected
+            onClick = { onBrandSelected("Specialized") }
+        )
+        
+        Spacer(modifier = Modifier.height(20.dp))
+        
+        // Бренд 2: Santa Cruz
+        BrandItem(
+            logoName = "logo_santacruz", // Если логотипа нет, будет просто текст
+            brandName = "SANTA CRUZ",
+            onClick = { onBrandSelected("Santa Cruz") }
         )
     }
 }
@@ -69,7 +78,7 @@ fun BrandItem(logoName: String, brandName: String, onClick: () -> Unit) {
                     .padding(horizontal = 32.dp)
             )
         } else {
-            // фоллбек, если картинки нет (для отладки)
+            // фоллбек, если картинки нет (для отладки или если нет лого)
             Text(brandName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
     }

@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,6 +53,7 @@ private val PriceRed = Color(0xFFD32F2F)
 
 @Composable
 fun ConfiguratorScreen(
+    selectedBrand: String = "Specialized",
     vm: ConfiguratorViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onReturnToMenu: () -> Unit
@@ -86,11 +86,18 @@ fun ConfiguratorScreen(
     val currentFork = currentBuild[PartType.FORK]
     val isOrangeFork = currentFork?.name?.contains("Orange", ignoreCase = true) == true
     val isZeb = currentFork?.name?.contains("Zeb", ignoreCase = true) == true
+    
+    val currentFrame = currentBuild[PartType.FRAME]
+    val isSantaCruzFrame = currentFrame?.name?.contains("Santa Cruz", ignoreCase = true) == true
 
-    val fixedConfigs = remember(isOrangeFork, isZeb) {
+    val fixedConfigs = remember(isOrangeFork, isZeb, isSantaCruzFrame) {
         mapOf(
             PartType.FRAME to PartConfig(-6f, -80f, 219f, 0f),
-            PartType.REAR_SHOCK to PartConfig(1f, -85f, 46f, 136f),
+            PartType.REAR_SHOCK to if (isSantaCruzFrame) {
+                PartConfig(-4f, -53f, 46f, 325f) 
+            } else {
+                PartConfig(1f, -85f, 46f, 136f)
+            },
             PartType.FORK to when {
                 isZeb -> PartConfig(91f, -87f, 161f, 0f)
                 isOrangeFork -> PartConfig(95f, -86f, 193f, 0f)
@@ -118,6 +125,7 @@ fun ConfiguratorScreen(
         )
     } else {
         ConfiguratorContent(
+            selectedBrand = selectedBrand,
             vm = vm,
             allParts = allParts,
             selectedCategory = selectedCategory,
@@ -133,6 +141,7 @@ fun ConfiguratorScreen(
 
 @Composable
 fun ConfiguratorContent(
+    selectedBrand: String,
     vm: ConfiguratorViewModel,
     allParts: List<BikePart>,
     selectedCategory: PartType,
@@ -145,8 +154,24 @@ fun ConfiguratorContent(
 ) {
     val context = LocalContext.current
     val selectedPartInCurrentCategory = currentBuild[selectedCategory]
-    val partsToShow = allParts.filter {
-        it.type == selectedCategory && !it.name.contains("(Orange)", ignoreCase = true)
+    
+    // Фильтруем детали. Если это выбор рамы - показываем только рамы выбранного бренда.
+    val partsToShow = remember(allParts, selectedCategory, selectedBrand) {
+        allParts.filter { part ->
+            if (part.type != selectedCategory) return@filter false
+            if (part.name.contains("(Orange)", ignoreCase = true)) return@filter false
+            
+            // Логика фильтрации рам по выбранному бренду
+            if (selectedCategory == PartType.FRAME) {
+                if (selectedBrand == "Santa Cruz") {
+                    part.name.contains("Santa Cruz", ignoreCase = true)
+                } else {
+                    part.name.contains("S-Works", ignoreCase = true)
+                }
+            } else {
+                true
+            }
+        }
     }
 
     val (displayedSizes, displayedColorText) = remember(selectedCategory) {

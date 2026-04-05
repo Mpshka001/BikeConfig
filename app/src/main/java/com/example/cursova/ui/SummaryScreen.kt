@@ -186,7 +186,7 @@ fun SummaryScreen(
                             )
                         }
                     }
-                    Divider(color = Color(0xFFEEEEEE))
+                    HorizontalDivider(color = Color(0xFFEEEEEE))
                 }
             }
         }
