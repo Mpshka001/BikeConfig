@@ -86,15 +86,33 @@ fun ConfiguratorScreen(
     val currentFork = currentBuild[PartType.FORK]
     val isOrangeFork = currentFork?.name?.contains("Orange", ignoreCase = true) == true
     val isZeb = currentFork?.name?.contains("Zeb", ignoreCase = true) == true
-    
+
     val currentFrame = currentBuild[PartType.FRAME]
     val isSantaCruzFrame = currentFrame?.name?.contains("Santa Cruz", ignoreCase = true) == true
+    val isNukeproofFrame = currentFrame?.name?.contains("Nukeproof", ignoreCase = true) == true
+    val isNukeproofMega = currentFrame?.name?.contains("Mega", ignoreCase = true) == true
+    val isNukeproofGiga = currentFrame?.name?.contains("Giga", ignoreCase = true) == true
+    val isTransitionFrame = currentFrame?.name?.contains("Transition", ignoreCase = true) == true
 
-    val fixedConfigs = remember(isOrangeFork, isZeb, isSantaCruzFrame) {
+    val fixedConfigs = remember(isOrangeFork, isZeb, isSantaCruzFrame, isNukeproofFrame, isNukeproofMega, isNukeproofGiga, isTransitionFrame) {
         mapOf(
-            PartType.FRAME to PartConfig(-6f, -80f, 219f, 0f),
+            PartType.FRAME to if (isNukeproofMega) {
+                PartConfig(-6f, -80f, 216f, 0f)
+            } else if (isNukeproofGiga) {
+                PartConfig(-12f, -78f, 218f, 0f)
+            } else if (isTransitionFrame) {
+                PartConfig(-13f, -81f, 182f, 1f)
+            } else {
+                PartConfig(-6f, -80f, 219f, 0f)
+            },
             PartType.REAR_SHOCK to if (isSantaCruzFrame) {
-                PartConfig(-4f, -53f, 46f, 325f) 
+                PartConfig(-4f, -53f, 46f, 325f)
+            } else if (isNukeproofMega) {
+                PartConfig(6f, -82f, 40f, 331f)
+            } else if (isNukeproofGiga) {
+                PartConfig(2f, -59f, 41f, 328f)
+            } else if (isTransitionFrame) {
+                PartConfig(-1f, -58f, 41f, 91f)
             } else {
                 PartConfig(1f, -85f, 46f, 136f)
             },
@@ -110,8 +128,16 @@ fun ConfiguratorScreen(
             PartType.DRIVETRAIN to PartConfig(-96f, -13f, 44f, 0f),
             PartType.COCKPIT to PartConfig(76f, -127f, 63f, 0f),
             PartType.BRAKES to PartConfig(114f, -23f, 28f, -115f),
-            PartType.DROPPER to PartConfig(-39f, -115f, 73f, -20f),
-            PartType.SADDLE to PartConfig(-50f, -150f, 44f, -3f)
+            PartType.DROPPER to if (isTransitionFrame) {
+                PartConfig(-32f, -111f, 70f, -18f)
+            } else {
+                PartConfig(-39f, -115f, 73f, -20f)
+            },
+            PartType.SADDLE to if (isTransitionFrame) {
+                PartConfig(-41f, -145f, 44f, -3f)
+            } else {
+                PartConfig(-50f, -150f, 44f, -3f)
+            }
         )
     }
 
@@ -154,19 +180,35 @@ fun ConfiguratorContent(
 ) {
     val context = LocalContext.current
     val selectedPartInCurrentCategory = currentBuild[selectedCategory]
-    
+
+    // Состояние для плеера звука втулки
+    var currentMediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            currentMediaPlayer?.release()
+        }
+    }
+
     // Фильтруем детали. Если это выбор рамы - показываем только рамы выбранного бренда.
     val partsToShow = remember(allParts, selectedCategory, selectedBrand) {
         allParts.filter { part ->
             if (part.type != selectedCategory) return@filter false
             if (part.name.contains("(Orange)", ignoreCase = true)) return@filter false
-            
+
+            // Фильтр для отображения только дефолтного черного мегатауэра в списке (остальные цвета доступны при выборе)
+            if (part.name.contains("Megatower", ignoreCase = true) && !part.name.contains("Black", ignoreCase = true)) return@filter false
+            // Фильтр для ZEB
+            if (part.name.contains("ZEB", ignoreCase = true) && part.name.contains("Slab Grey", ignoreCase = true)) return@filter false
+            if (part.name.contains("ZEB", ignoreCase = true) && part.name.contains("Red", ignoreCase = true)) return@filter false
+
             // Логика фильтрации рам по выбранному бренду
             if (selectedCategory == PartType.FRAME) {
-                if (selectedBrand == "Santa Cruz") {
-                    part.name.contains("Santa Cruz", ignoreCase = true)
-                } else {
-                    part.name.contains("S-Works", ignoreCase = true)
+                when (selectedBrand) {
+                    "Santa Cruz" -> part.name.contains("Santa Cruz", ignoreCase = true)
+                    "Nukeproof" -> part.name.contains("Nukeproof", ignoreCase = true)
+                    "Transition" -> part.name.contains("Transition", ignoreCase = true)
+                    else -> part.name.contains("S-Works", ignoreCase = true)
                 }
             } else {
                 true
@@ -174,11 +216,24 @@ fun ConfiguratorContent(
         }
     }
 
-    val (displayedSizes, displayedColorText) = remember(selectedCategory) {
+    val (displayedSizes, displayedColorText) = remember(selectedCategory, selectedBrand, currentBuild) {
         when (selectedCategory) {
-            PartType.FRAME -> Pair(listOf("S1", "S2", "S3", "S4", "S5", "S6"), "Satin")
+            PartType.FRAME -> if (selectedBrand in listOf("Santa Cruz", "Nukeproof", "Transition")) {
+                Pair(listOf("S", "M", "L", "XL", "XXL"), null)
+            } else {
+                Pair(listOf("S1", "S2", "S3", "S4", "S5", "S6"), "Satin")
+            }
             PartType.FORK -> Pair(listOf("29\""), null)
-            PartType.REAR_SHOCK -> Pair(listOf("210x52.5"), null)
+            PartType.REAR_SHOCK -> {
+                val frameName = currentBuild[PartType.FRAME]?.name ?: ""
+                when {
+                    frameName.contains("Hightower", ignoreCase = true) -> Pair(listOf("210x55"), null)
+                    frameName.contains("Megatower", ignoreCase = true) -> Pair(listOf("230x60"), null)
+                    frameName.contains("Nukeproof", ignoreCase = true) -> Pair(listOf("230x65"), null)
+                    frameName.contains("Transition", ignoreCase = true) -> Pair(listOf("205x62.5"), null)
+                    else -> Pair(listOf("210x52.5"), null)
+                }
+            }
             PartType.WHEELS -> Pair(listOf("29\""), null)
             PartType.CRANKS -> Pair(listOf("165 mm", "170 mm", "175 mm"), null)
             PartType.DROPPER -> Pair(listOf("150 mm", "175 mm", "200 mm"), null)
@@ -196,8 +251,10 @@ fun ConfiguratorContent(
             selectedSizesMap[selectedCategory] = selectedSize
         }
         if (selectedCategory == PartType.FRAME && selectedSizesMap[selectedCategory] == null) {
-            selectedSize = "S3"
-            selectedSizesMap[selectedCategory] = "S3"
+            selectedSize = displayedSizes.firstOrNull() ?: ""
+            if (selectedSize.isNotEmpty()) {
+                selectedSizesMap[selectedCategory] = selectedSize
+            }
         }
     }
 
@@ -222,7 +279,9 @@ fun ConfiguratorContent(
         LazyColumn(modifier = Modifier.weight(0.2f).fillMaxWidth().padding(horizontal = 8.dp)) {
             items(partsToShow) { part ->
                 val isSelected = selectedPartInCurrentCategory?.id == part.id ||
-                        (part.name.contains("Fox 38") && selectedPartInCurrentCategory?.name?.contains("Fox 38") == true)
+                        (part.name.contains("Fox 38") && selectedPartInCurrentCategory?.name?.contains("Fox 38") == true) ||
+                        (part.name.contains("Megatower") && selectedPartInCurrentCategory?.name?.contains("Megatower") == true) ||
+                        (part.name.contains("ZEB") && selectedPartInCurrentCategory?.name?.contains("ZEB") == true)
                 val isBrandSelection = selectedCategory == PartType.BOTTOM_BRACKET
 
                 PartItemCard(
@@ -251,26 +310,34 @@ fun ConfiguratorContent(
                 ) {
                     if (selectedPartInCurrentCategory != null) {
                         val part = selectedPartInCurrentCategory
-                        val displayName = part.name
-                            .replace(" (Orange)", "")
-                            .replace(" (Black)", "")
-                            .replace(" Grip2", "")
-                            .replace(" Factory", "")
+
+                        // Чистая логика для имен (для заголовка детального вида)
+                        val displayName = when {
+                            part.name.contains("Megatower", ignoreCase = true) -> "Santa Cruz Megatower"
+                            part.name.contains("ZEB", ignoreCase = true) -> "RockShox ZEB Ultimate"
+                            part.name.contains("Fox 38", ignoreCase = true) -> "Fox 38 Factory Grip2"
+                            else -> part.name.replace(Regex("\\s*\\(.*?\\)"), "").trim()
+                        }
 
                         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(displayName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black, fontSize = 22.sp)
                                 Spacer(modifier = Modifier.height(4.dp))
                             }
-                            
+
                             // ЗВУК ВТУЛКИ (динамік)
                             if (part.audioUrl != null) {
                                 IconButton(onClick = {
                                     val resId = context.resources.getIdentifier(part.audioUrl, "raw", context.packageName)
                                     if (resId != 0) {
-                                        val mediaPlayer = MediaPlayer.create(context, resId)
-                                        mediaPlayer?.setOnCompletionListener { it.release() }
-                                        mediaPlayer?.start()
+                                        currentMediaPlayer?.release()
+                                        val mp = MediaPlayer.create(context, resId)
+                                        mp?.setOnCompletionListener {
+                                            it.release()
+                                            if (currentMediaPlayer == it) currentMediaPlayer = null
+                                        }
+                                        mp?.start()
+                                        currentMediaPlayer = mp
                                     }
                                 }) {
                                     Icon(Icons.Default.PlayArrow, contentDescription = "Play hub sound", tint = Color.Black)
@@ -287,8 +354,27 @@ fun ConfiguratorContent(
                         if (selectedCategory == PartType.FORK && part.name.contains("Fox", ignoreCase = true)) {
                             Text("Колір:", fontSize = 14.sp, color = Color.Gray); Spacer(modifier = Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                ColorSelectionCircle(Color.Black, !part.name.contains("Orange", true)) { allParts.find { it.type == PartType.FORK && !it.name.contains("Orange") }?.let { vm.selectPart(it) } }
+                                ColorSelectionCircle(Color.Black, !part.name.contains("Orange", true)) { allParts.find { it.type == PartType.FORK && !it.name.contains("Orange") && it.name.contains("Fox") }?.let { vm.selectPart(it) } }
                                 ColorSelectionCircle(Color(0xFFFF6600), part.name.contains("Orange", true)) { allParts.find { it.type == PartType.FORK && it.name.contains("Orange") }?.let { vm.selectPart(it) } }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                        } else if (selectedCategory == PartType.FORK && part.name.contains("ZEB", ignoreCase = true)) {
+                            Text("Колір:", fontSize = 14.sp, color = Color.Gray); Spacer(modifier = Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                ColorSelectionCircle(Color.Black, part.name.contains("Black", true)) { allParts.find { it.type == PartType.FORK && it.name.contains("ZEB", true) && it.name.contains("Black", true) }?.let { vm.selectPart(it) } }
+                                ColorSelectionCircle(Color(0xFF546E7A), part.name.contains("Slab Grey", true)) { allParts.find { it.type == PartType.FORK && it.name.contains("ZEB", true) && it.name.contains("Slab", true) }?.let { vm.selectPart(it) } }
+                                ColorSelectionCircle(Color.Red, part.name.contains("Red", true)) { allParts.find { it.type == PartType.FORK && it.name.contains("ZEB", true) && it.name.contains("Red", true) }?.let { vm.selectPart(it) } }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                        } else if (selectedCategory == PartType.FRAME && part.name.contains("Megatower", ignoreCase = true)) {
+                            Text("Колір:", fontSize = 14.sp, color = Color.Gray); Spacer(modifier = Modifier.height(8.dp))
+                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                ColorSelectionCircle(Color.Black, part.name.contains("Black", true)) { allParts.find { it.type == PartType.FRAME && it.name.contains("Megatower Black", true) }?.let { vm.selectPart(it) } }
+                                ColorSelectionCircle(Color.Blue, part.name.contains("Blue", true)) { allParts.find { it.type == PartType.FRAME && it.name.contains("Megatower Blue", true) }?.let { vm.selectPart(it) } }
+                                ColorSelectionCircle(Color.Gray, part.name.contains("Grey", true) && !part.name.contains("Light", true) && !part.name.contains("Slab", true)) { allParts.find { it.type == PartType.FRAME && it.name.contains("Megatower Grey", true) && !it.name.contains("Light", true) && !it.name.contains("Slab", true) }?.let { vm.selectPart(it) } }
+                                ColorSelectionCircle(Color.LightGray, part.name.contains("Light Grey", true)) { allParts.find { it.type == PartType.FRAME && it.name.contains("Megatower Light Grey", true) }?.let { vm.selectPart(it) } }
+                                ColorSelectionCircle(Color.Red, part.name.contains("Red", true)) { allParts.find { it.type == PartType.FRAME && it.name.contains("Megatower Red", true) }?.let { vm.selectPart(it) } }
+                                ColorSelectionCircle(Color(0xFF546E7A), part.name.contains("Slab Grey", true)) { allParts.find { it.type == PartType.FRAME && it.name.contains("Megatower Slab Grey", true) }?.let { vm.selectPart(it) } }
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                         } else if (displayedColorText != null) {
@@ -425,7 +511,14 @@ fun PartItemCard(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(part.name, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                // Чистим имя для отображения в списке карточек, как и для детального вида
+                val cleanedItemName = when {
+                    part.name.contains("Megatower", ignoreCase = true) -> "Santa Cruz Megatower"
+                    part.name.contains("ZEB", ignoreCase = true) -> "RockShox ZEB Ultimate"
+                    part.name.contains("Fox 38", ignoreCase = true) -> "Fox 38 Factory Grip2"
+                    else -> part.name.replace(Regex("\\s*\\(.*?\\)"), "").trim()
+                }
+                Text(cleanedItemName, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 if (showPrice) {
                     Text("$${part.price}", color = Color.Gray, fontSize = 14.sp)
                 }

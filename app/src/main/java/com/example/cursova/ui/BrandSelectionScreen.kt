@@ -4,6 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,7 +25,8 @@ fun BrandSelectionScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center // центрируем контент
     ) {
@@ -51,6 +54,24 @@ fun BrandSelectionScreen(
             logoName = "logo_santacruz", // Если логотипа нет, будет просто текст
             brandName = "SANTA CRUZ",
             onClick = { onBrandSelected("Santa Cruz") }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Бренд 3: Nukeproof
+        BrandItem(
+            logoName = "logo_nukeproof", // Если логотипа нет, будет просто текст
+            brandName = "NUKEPROOF",
+            onClick = { onBrandSelected("Nukeproof") }
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Бренд 4: Transition
+        BrandItem(
+            logoName = "logo_transition", // Если логотипа нет, будет просто текст
+            brandName = "TRANSITION",
+            onClick = { onBrandSelected("Transition") }
         )
     }
 }

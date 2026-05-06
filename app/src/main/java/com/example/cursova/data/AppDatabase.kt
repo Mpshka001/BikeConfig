@@ -59,11 +59,26 @@ abstract class AppDatabase : RoomDatabase() {
                 
                 // Santa Cruz Frames
                 BikePart("frame_sc_hightower", "Santa Cruz Hightower", PartType.FRAME, 3400.0, "frame_santacruz_hightower"),
+                BikePart("frame_sc_megatower_black", "Santa Cruz Megatower Black ", PartType.FRAME, 3600.0, "frame_santacruz_megatowerblack"),
+                BikePart("frame_sc_megatower_blue", "Santa Cruz Megatower Blue", PartType.FRAME, 3600.0, "frame_santacruz_megatowerblue"),
+                BikePart("frame_sc_megatower_grey", "Santa Cruz Megatower Grey", PartType.FRAME, 3600.0, "frame_santacruz_megatowergrey"),
+                BikePart("frame_sc_megatower_lightgrey", "Santa Cruz Megatower Light Grey", PartType.FRAME, 3600.0, "frame_santacruz_megatowerlightgrey"),
+                BikePart("frame_sc_megatower_red", "Santa Cruz Megatower Red", PartType.FRAME, 3600.0, "frame_santacruz_megatowerred"),
+                BikePart("frame_sc_megatower_slabgrey", "Santa Cruz Megatower Slab Grey", PartType.FRAME, 3600.0, "frame_santacruz_megatowerslabgrey"),
+
+                // Nukeproof Frames
+                BikePart("frame_np_mega290", "Nukeproof Mega 290", PartType.FRAME, 2800.0, "frame_nukeproofmega290black"),
+                BikePart("frame_np_giga290", "Nukeproof Giga 290", PartType.FRAME, 2950.0, "frame_nukeproofgiga290black"),
+
+                // Transition Frames
+                BikePart("frame_tr_sentinelv3", "Transition Sentinel V3", PartType.FRAME, 3400.0, "frame_transitionsentinelv3_purple"),
 
                 // --- FORKS ---
                 BikePart("fork_fox38_f", "Fox 38 Factory Grip2", PartType.FORK, 1250.0, "fork_fox38"),
                 BikePart("fork_fox38_o", "Fox 38 Factory (Orange)", PartType.FORK, 1250.0, "fork_fox38orange"),
-                BikePart("fork_rs_zeb_u", "RockShox ZEB Ultimate", PartType.FORK, 1100.0, "fork_rszeb"),
+                BikePart("fork_rs_zeb_u", "RockShox ZEB Ultimate (Black)", PartType.FORK, 1100.0, "fork_zebblack"),
+                BikePart("fork_rs_zeb_slab", "RockShox ZEB Ultimate (Slab Grey)", PartType.FORK, 1100.0, "fork_rszebslabgrey"),
+                BikePart("fork_rs_zeb_red", "RockShox ZEB Ultimate (Red)", PartType.FORK, 1100.0, "fork_rszebred"),
 
                 // --- REAR SHOCKS ---
                 BikePart("shock_fox_x2", "Fox Float X2 Factory", PartType.REAR_SHOCK, 799.0, "shock_floatfactorygenie"),
