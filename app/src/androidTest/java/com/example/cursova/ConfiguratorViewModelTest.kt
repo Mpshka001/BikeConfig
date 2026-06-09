@@ -19,7 +19,7 @@ class ConfiguratorViewModelTest {
 
     @Before
     fun setUp() {
-        // Отримуємо справжній контекст додатка для AndroidViewModel та Room
+        // отримуємо справжній контекст додатка для AndroidViewModel та Room
         val application = ApplicationProvider.getApplicationContext<Application>()
         viewModel = ConfiguratorViewModel(application)
     }

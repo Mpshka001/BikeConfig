@@ -17,9 +17,7 @@ import com.example.cursova.ui.ConfiguratorScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        // включаем режим "от края до края"
-        // это убирает фиолетовую полосу и делает статус-бар прозрачным
-        // SystemBarStyle.light означает, что иконки (часы) будут темными (для светлого фона)
+        // прозора шторка
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(
                 Color.TRANSPARENT,

@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun BrandSelectionScreen(
-    onBrandSelected: (String) -> Unit // коллбек навигации с передачей бренда
+    onBrandSelected: (String) -> Unit // коллбек навігаціі з передачою данних
 ) {
     Column(
         modifier = Modifier
@@ -28,9 +28,9 @@ fun BrandSelectionScreen(
             .padding(24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center // центрируем контент
+        verticalArrangement = Arrangement.Center
     ) {
-        // заголовок экрана
+        // заголовок екрану
         Text(
             text = "ОБЕРІТЬ БРЕНД",
             fontSize = 24.sp,

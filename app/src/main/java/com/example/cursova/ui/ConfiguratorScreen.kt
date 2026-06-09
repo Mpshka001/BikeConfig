@@ -38,7 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cursova.domain.BikePart
 import com.example.cursova.domain.PartType
 
-// модель для координат деталей на визуализаторе
+// модель для координат деталей на визуализаторі
 data class PartConfig(
     val x: Float,
     val y: Float,
@@ -46,7 +46,7 @@ data class PartConfig(
     val rotation: Float = 0f
 )
 
-// константы цветов для ui
+// кольори
 private val SpecializedRed = Color(0xFFD0021B)
 private val SuccessGreen = Color(0xFF4CAF50)
 private val PriceRed = Color(0xFFD32F2F)
@@ -181,7 +181,7 @@ fun ConfiguratorContent(
     val context = LocalContext.current
     val selectedPartInCurrentCategory = currentBuild[selectedCategory]
 
-    // Состояние для плеера звука втулки
+    // Стан для плеера звука втулки
     var currentMediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
 
     DisposableEffect(Unit) {
@@ -190,7 +190,7 @@ fun ConfiguratorContent(
         }
     }
 
-    // Фильтруем детали. Если это выбор рамы - показываем только рамы выбранного бренда.
+    // Фільтр деталей. Якщо обраний конкретний бренд, показується тільки він
     val partsToShow = remember(allParts, selectedCategory, selectedBrand) {
         allParts.filter { part ->
             if (part.type != selectedCategory) return@filter false

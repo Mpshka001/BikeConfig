@@ -19,17 +19,17 @@ enum class PartType {
     SADDLE
 }
 
-// сущность таблицы базы данных
+// сутність таблиці бази данних
 @Entity
 data class BikePart(
-    // первичный ключ (uuid)
+    // первинни ключ (uuid)
     @PrimaryKey val id: String,
     val name: String,
     val type: PartType,
     val price: Double,
     val imageUrl: String,
 
-    // поле совместимости dub/hollowtech
+    // поля сумісності dub/hollowtech
     val standard: String? = null,
 
     //  звук втулки

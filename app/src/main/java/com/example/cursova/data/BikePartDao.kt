@@ -11,25 +11,25 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface BikePartDao {
 
-    // --- РОБОТА З ДЕТАЛЯМИ (КАТАЛОГ) ---
+    // РОБОТА З ДЕТАЛЯМИ
 
-    // Отримати всі деталі (Flow для автооновлення UI)
+    // отримати всі деталі (Flow для автооновлення UI)
     @Query("SELECT * FROM BikePart")
     fun getAllParts(): Flow<List<BikePart>>
 
-    // Вставка однієї деталі (твоя стара функція)
+    // вставка однієї деталі
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(part: BikePart)
 
-    // Вставка СПИСКУ деталей (потрібно для AppDatabase при першому старті)
+    // вставка СПИСКУ деталей (потрібно для AppDatabase при першому старті)
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllParts(parts: List<BikePart>)
 
-    // Перевірка кількості деталей (щоб знати, чи треба заповнювати базу)
+    // перевірка кількості деталей (щоб знати, чи треба заповнювати базу)
     @Query("SELECT COUNT(*) FROM BikePart")
     suspend fun getPartsCount(): Int
 
-    // Очистка таблиці (залишив про всяк випадок)
+    // очистка таблиці (залишив про всяк випадок)
     @Query("DELETE FROM BikePart")
     suspend fun deleteAll()
 
