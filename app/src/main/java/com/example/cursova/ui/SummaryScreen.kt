@@ -9,6 +9,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -32,15 +34,14 @@ fun SummaryScreen(
     configs: Map<PartType, PartConfig>,
     selectedSizes: Map<PartType, String>,
     onBack: () -> Unit,
-    onOrderClick: () -> Unit
+    onOrderClick: () -> Unit,
+    onChangeColor: (PartType) -> Unit // Используем этот же коллбек для быстрого редактирования
 ) {
     val context = LocalContext.current
 
-    // считаем общую сумму сборки
     val totalPrice = currentBuild.values.sumOf { it?.price ?: 0.0 }
     val formattedPrice = NumberFormat.getCurrencyInstance(Locale.US).format(totalPrice)
 
-    // функция-интент: открывает браузер с поиском детали в google shopping
     fun searchInStore(query: String) {
         val url = "https://www.google.com/search?tbm=shop&q=${Uri.encode(query)}"
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -53,8 +54,6 @@ fun SummaryScreen(
             .background(Color.White)
             .verticalScroll(rememberScrollState())
     ) {
-
-        // заголовок с поздравлением
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -65,7 +64,7 @@ fun SummaryScreen(
                 text = "ВІТАЄМО!",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Black,
-                color = Color(0xFF4CAF50) // зеленый "успех"
+                color = Color(0xFF4CAF50)
             )
             Text(
                 text = "Твій байк готовий до збірки",
@@ -74,7 +73,6 @@ fun SummaryScreen(
             )
         }
 
-        // карточка с визуализацией готового байка
         Box(
             modifier = Modifier
                 .height(300.dp)
@@ -86,7 +84,6 @@ fun SummaryScreen(
                 ),
             contentAlignment = Alignment.Center
         ) {
-            // тень под колесами
             Box(
                 modifier = Modifier
                     .offset(y = 80.dp)
@@ -94,13 +91,11 @@ fun SummaryScreen(
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.1f))
             )
-            // сам рендер байка
             Box(modifier = Modifier.graphicsLayer(scaleX = 1.0f, scaleY = 1.0f).offset(x = (-10).dp)) {
                 BikeVisualizer(build = currentBuild, configs = configs)
             }
         }
 
-        // блок с итоговой ценой
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -112,7 +107,7 @@ fun SummaryScreen(
                 text = formattedPrice,
                 fontSize = 42.sp,
                 fontWeight = FontWeight.Black,
-                color = Color(0xFFD32F2F) // красный ценник
+                color = Color(0xFFD32F2F)
             )
         }
 
@@ -129,13 +124,11 @@ fun SummaryScreen(
             color = Color.Gray
         )
 
-        // список деталей с возможностью клика
         Column(modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)) {
             currentBuild.forEach { (type, part) ->
                 if (part != null) {
                     val sizeInfo = selectedSizes[type]?.let { "Розмір: $it" }
 
-                    // убираем лишние слова из названия для чистоты
                     val displayName = part.name
                         .replace(" (Orange)", "")
                         .replace(" (Black)", "")
@@ -145,14 +138,14 @@ fun SummaryScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { searchInStore(displayName) } // клик запускает поиск
+                            .clickable { searchInStore(displayName) }
                             .padding(vertical = 8.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // название категории (с большой буквы)
                             Text(
                                 text = type.name.lowercase().replace("_", " ")
                                     .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() },
@@ -161,7 +154,6 @@ fun SummaryScreen(
                                 modifier = Modifier.weight(1f)
                             )
 
-                            // название детали
                             Text(
                                 text = displayName,
                                 fontWeight = FontWeight.Medium,
@@ -170,12 +162,31 @@ fun SummaryScreen(
                                 maxLines = 1
                             )
 
-                            // цена детали
+                            // показываем ли мы иконку для этой детали
+                            val isEditable = type == PartType.FRAME || type == PartType.FORK ||
+                                    type == PartType.CRANKS || type == PartType.DROPPER ||
+                                    type == PartType.SADDLE
+
                             Text(
                                 text = "$${part.price.toInt()}",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
+                                fontSize = 14.sp,
+                                modifier = Modifier.padding(end = if (isEditable) 8.dp else 0.dp)
                             )
+
+                            if (isEditable) {
+                                IconButton(
+                                    onClick = { onChangeColor(type) },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Edit,
+                                        contentDescription = "Edit",
+                                        tint = Color.Gray,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
                         }
                         if (sizeInfo != null) {
                             Text(
@@ -193,7 +204,6 @@ fun SummaryScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // кнопка возврата в меню
         Button(
             onClick = onOrderClick,
             modifier = Modifier
@@ -206,7 +216,6 @@ fun SummaryScreen(
             Text("Головне меню", fontSize = 16.sp, fontWeight = FontWeight.Bold)
         }
 
-        // кнопка редактирования
         TextButton(
             onClick = onBack,
             modifier = Modifier

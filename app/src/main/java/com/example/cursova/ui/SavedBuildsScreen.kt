@@ -18,7 +18,7 @@ fun SavedBuildsScreen(
     viewModel: ConfiguratorViewModel,
     onBuildSelected: () -> Unit // Щоб повернутися назад після вибору
 ) {
-    // Збираємо дані з Flow
+    // збираємо дані з Flow
     val builds by viewModel.savedBuilds.collectAsState(initial = emptyList())
 
     if (builds.isEmpty()) {

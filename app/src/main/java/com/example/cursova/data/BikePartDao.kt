@@ -21,19 +21,19 @@ interface BikePartDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(part: BikePart)
 
-    // вставка СПИСКУ деталей (потрібно для AppDatabase при першому старті)
+    // вставка СПИСКУ деталей потрібно для AppDatabase при першому старті
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllParts(parts: List<BikePart>)
 
-    // перевірка кількості деталей (щоб знати, чи треба заповнювати базу)
+    // перевірка кількості деталей щоб знати чи треба заповнювати базу
     @Query("SELECT COUNT(*) FROM BikePart")
     suspend fun getPartsCount(): Int
 
-    // очистка таблиці (залишив про всяк випадок)
+    // очистка таблиці
     @Query("DELETE FROM BikePart")
     suspend fun deleteAll()
 
-    // --- РОБОТА ЗІ ЗБЕРЕЖЕНИМИ ЗБІРКАМИ (ГАРАЖ) ---
+    //  РОБОТА ЗІ ЗБЕРЕЖЕНИМИ ЗБІРКАМИ (ГАРАЖ)
 
     // 1. Зберегти нову збірку
     @Insert(onConflict = OnConflictStrategy.REPLACE)

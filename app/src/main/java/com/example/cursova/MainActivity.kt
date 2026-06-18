@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
 
             NavHost(navController = navController, startDestination = "start") {
 
-                // экран 1: выбор бренда
+                // экран 1 выбор бренда
                 composable("start") {
                     BrandSelectionScreen(
                         onBrandSelected = { brandName ->
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // экран 2: конфигуратор (принимает аргумент бренда)
+                // экран 2 конфигуратор принимает аргумент бренда
                 composable(
                     route = "configurator/{brand}",
                     arguments = listOf(navArgument("brand") { type = NavType.StringType })

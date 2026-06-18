@@ -38,7 +38,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cursova.domain.BikePart
 import com.example.cursova.domain.PartType
 
-// модель для координат деталей на визуализаторі
 data class PartConfig(
     val x: Float,
     val y: Float,
@@ -46,7 +45,6 @@ data class PartConfig(
     val rotation: Float = 0f
 )
 
-// кольори
 private val SpecializedRed = Color(0xFFD0021B)
 private val SuccessGreen = Color(0xFF4CAF50)
 private val PriceRed = Color(0xFFD32F2F)
@@ -146,8 +144,16 @@ fun ConfiguratorScreen(
             currentBuild = currentBuild,
             configs = fixedConfigs,
             selectedSizes = selectedSizesMap,
-            onBack = { showSummary = false },
-            onOrderClick = onReturnToMenu
+            onBack = {
+                vm.selectCategory(orderedCategories.last())
+                showSummary = false
+            },
+            onOrderClick = onReturnToMenu,
+            onChangeColor = { partType ->
+                vm.setColorOnlyMode(true)
+                vm.selectCategory(partType)
+                showSummary = false
+            }
         )
     } else {
         ConfiguratorContent(
@@ -181,7 +187,8 @@ fun ConfiguratorContent(
     val context = LocalContext.current
     val selectedPartInCurrentCategory = currentBuild[selectedCategory]
 
-    // Стан для плеера звука втулки
+    val isColorOnlyMode by vm.isColorOnlyMode.collectAsState()
+
     var currentMediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
 
     DisposableEffect(Unit) {
@@ -190,19 +197,15 @@ fun ConfiguratorContent(
         }
     }
 
-    // Фільтр деталей. Якщо обраний конкретний бренд, показується тільки він
     val partsToShow = remember(allParts, selectedCategory, selectedBrand) {
         allParts.filter { part ->
             if (part.type != selectedCategory) return@filter false
             if (part.name.contains("(Orange)", ignoreCase = true)) return@filter false
 
-            // Фильтр для отображения только дефолтного черного мегатауэра в списке (остальные цвета доступны при выборе)
             if (part.name.contains("Megatower", ignoreCase = true) && !part.name.contains("Black", ignoreCase = true)) return@filter false
-            // Фильтр для ZEB
             if (part.name.contains("ZEB", ignoreCase = true) && part.name.contains("Slab Grey", ignoreCase = true)) return@filter false
             if (part.name.contains("ZEB", ignoreCase = true) && part.name.contains("Red", ignoreCase = true)) return@filter false
 
-            // Логика фильтрации рам по выбранному бренду
             if (selectedCategory == PartType.FRAME) {
                 when (selectedBrand) {
                     "Santa Cruz" -> part.name.contains("Santa Cruz", ignoreCase = true)
@@ -269,8 +272,19 @@ fun ConfiguratorContent(
             }
         }
 
+        // динамический заголовок для режима быстрого редактирования
+        val titleText = if (isColorOnlyMode) {
+            when (selectedCategory) {
+                PartType.CRANKS, PartType.DROPPER, PartType.SADDLE -> "Оберіть розмір"
+                PartType.FRAME -> "Оберіть колір та розмір"
+                else -> "Оберіть колір"
+            }
+        } else {
+            getCategoryTitle(selectedCategory)
+        }
+
         Text(
-            text = getCategoryTitle(selectedCategory),
+            text = titleText,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp)
@@ -289,7 +303,11 @@ fun ConfiguratorContent(
                     isSelected = isSelected,
                     isLarge = isBrandSelection,
                     showPrice = !isBrandSelection,
-                    onClick = { vm.selectPart(part) }
+                    onClick = {
+                        if (!isColorOnlyMode) {
+                            vm.selectPart(part)
+                        }
+                    }
                 )
             }
         }
@@ -311,7 +329,6 @@ fun ConfiguratorContent(
                     if (selectedPartInCurrentCategory != null) {
                         val part = selectedPartInCurrentCategory
 
-                        // Чистая логика для имен (для заголовка детального вида)
                         val displayName = when {
                             part.name.contains("Megatower", ignoreCase = true) -> "Santa Cruz Megatower"
                             part.name.contains("ZEB", ignoreCase = true) -> "RockShox ZEB Ultimate"
@@ -325,7 +342,6 @@ fun ConfiguratorContent(
                                 Spacer(modifier = Modifier.height(4.dp))
                             }
 
-                            // ЗВУК ВТУЛКИ (динамік)
                             if (part.audioUrl != null) {
                                 IconButton(onClick = {
                                     val resId = context.resources.getIdentifier(part.audioUrl, "raw", context.packageName)
@@ -413,43 +429,62 @@ fun ConfiguratorContent(
                     Column(modifier = Modifier.padding(24.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                            val currentIndex = orderedCategories.indexOf(selectedCategory)
-                            val isFirstStep = currentIndex == 0
-                            val isLastStep = selectedCategory == orderedCategories.last()
-
-                            OutlinedButton(
-                                onClick = {
-                                    if (isFirstStep) {
-                                        onBackClick()
-                                    } else {
-                                        vm.clearSelection(selectedCategory)
-                                        val prevIndex = (currentIndex - 1 + orderedCategories.size) % orderedCategories.size
-                                        vm.selectCategory(orderedCategories[prevIndex])
-                                    }
-                                },
-                                modifier = Modifier.height(56.dp).weight(0.3f), shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)
-                            ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
-
-                            Button(
-                                onClick = {
-                                    if (isLastStep) {
+                            if (isColorOnlyMode) {
+                                Button(
+                                    onClick = {
+                                        vm.setColorOnlyMode(false)
                                         onFinish()
-                                    } else {
-                                        val nextIndex = (currentIndex + 1) % orderedCategories.size
-                                        vm.selectCategory(orderedCategories[nextIndex])
-                                    }
-                                },
-                                modifier = Modifier.height(56.dp).weight(1f),
-                                enabled = selectedPartInCurrentCategory != null,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isLastStep) SuccessGreen else SpecializedRed,
-                                    contentColor = Color.White
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(if (isLastStep) "ЗАВЕРШИТИ" else "ДОДАТИ ДО ЗБІРКИ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Icon(if (isLastStep) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                                    },
+                                    modifier = Modifier.height(56.dp).fillMaxWidth(),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = SuccessGreen,
+                                        contentColor = Color.White
+                                    ),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text("ЗАВЕРШИТИ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(Icons.Default.Check, contentDescription = null)
+                                }
+                            } else {
+                                val currentIndex = orderedCategories.indexOf(selectedCategory)
+                                val isFirstStep = currentIndex == 0
+                                val isLastStep = selectedCategory == orderedCategories.last()
+
+                                OutlinedButton(
+                                    onClick = {
+                                        if (isFirstStep) {
+                                            onBackClick()
+                                        } else {
+                                            vm.clearSelection(selectedCategory)
+                                            val prevIndex = (currentIndex - 1 + orderedCategories.size) % orderedCategories.size
+                                            vm.selectCategory(orderedCategories[prevIndex])
+                                        }
+                                    },
+                                    modifier = Modifier.height(56.dp).weight(0.3f), shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)
+                                ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
+
+                                Button(
+                                    onClick = {
+                                        if (isLastStep) {
+                                            onFinish()
+                                        } else {
+                                            val nextIndex = (currentIndex + 1) % orderedCategories.size
+                                            vm.selectCategory(orderedCategories[nextIndex])
+                                        }
+                                    },
+                                    modifier = Modifier.height(56.dp).weight(1f),
+                                    enabled = selectedPartInCurrentCategory != null,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isLastStep) SuccessGreen else SpecializedRed,
+                                        contentColor = Color.White
+                                    ),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(if (isLastStep) "ЗАВЕРШИТИ" else "ДОДАТИ ДО ЗБІРКИ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Icon(if (isLastStep) Icons.Default.Check else Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                                }
                             }
                         }
                     }
@@ -511,7 +546,6 @@ fun PartItemCard(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                // Чистим имя для отображения в списке карточек, как и для детального вида
                 val cleanedItemName = when {
                     part.name.contains("Megatower", ignoreCase = true) -> "Santa Cruz Megatower"
                     part.name.contains("ZEB", ignoreCase = true) -> "RockShox ZEB Ultimate"
@@ -528,7 +562,6 @@ fun PartItemCard(
     }
 }
 
-// визуализатор байка, рендерит слои изображений друг на друга
 @Composable
 fun BikeVisualizer(modifier: Modifier = Modifier, build: Map<PartType, BikePart?>, configs: Map<PartType, PartConfig>) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {

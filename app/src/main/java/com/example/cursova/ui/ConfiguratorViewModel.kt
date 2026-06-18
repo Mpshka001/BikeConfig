@@ -18,15 +18,12 @@ class ConfiguratorViewModel(application: Application) : AndroidViewModel(applica
 
     private val dao = AppDatabase.getDatabase(application, viewModelScope).bikePartDao()
 
-    // поток всех деталей из базы
     private val _allParts = dao.getAllParts()
 
-    // Список всіх збережених збірок
     val savedBuilds = dao.getAllSavedBuilds().stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
     )
 
-    // список категорий, которые зависят от стандарта каретки (dub/hollowtech)
     private val dependentParts = setOf(
         PartType.CRANKS,
         PartType.CASSETTE,
@@ -34,38 +31,41 @@ class ConfiguratorViewModel(application: Application) : AndroidViewModel(applica
         PartType.DRIVETRAIN
     )
 
-    // стартуем выбор всегда с рамы
     private val _selectedCategory = MutableStateFlow(PartType.FRAME)
     val selectedCategory = _selectedCategory.asStateFlow()
 
-    // текущая сборка (карта: тип детали -> сама деталь)
     private val _currentBuild = MutableStateFlow<Map<PartType, BikePart?>>(emptyMap())
     val currentBuild = _currentBuild.asStateFlow()
+
+    // Стейт для режима изменить только цвет или размер
+    private val _isColorOnlyMode = MutableStateFlow(false)
+    val isColorOnlyMode = _isColorOnlyMode.asStateFlow()
 
     val parts = combine(_allParts, _currentBuild, _selectedCategory) { all: List<BikePart>, build: Map<PartType, BikePart?>, category: PartType ->
         filterParts(all, build, category)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // выбор детали и сохранение в мапу
     fun selectPart(part: BikePart) {
         val newBuild = _currentBuild.value.toMutableMap()
         newBuild[part.type] = part
         _currentBuild.value = newBuild
     }
 
-    // сброс выбора (нужен для корректной навигации назад)
     fun clearSelection(type: PartType) {
         val newBuild = _currentBuild.value.toMutableMap()
         newBuild[type] = null
         _currentBuild.value = newBuild
     }
 
-    // переключение этапа сборки
     fun selectCategory(category: PartType) {
         _selectedCategory.value = category
     }
 
-    // Завантаження збереженої збірки
+    // Вкл/выкл режима редактирования цвета
+    fun setColorOnlyMode(enabled: Boolean) {
+        _isColorOnlyMode.value = enabled
+    }
+
     fun loadBuild(savedBuild: SavedBuild) {
         viewModelScope.launch {
             val ids = savedBuild.partsIds.split(",").filter { it.isNotBlank() }
@@ -75,15 +75,14 @@ class ConfiguratorViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    // Збереження поточної збірки
     fun saveCurrentBuild(name: String) {
         viewModelScope.launch {
             val parts = _currentBuild.value.values.filterNotNull()
             if (parts.isEmpty()) return@launch
-            
+
             val ids = parts.joinToString(",") { it.id }
             val totalPrice = parts.sumOf { it.price }
-            
+
             val newBuild = SavedBuild(
                 name = name,
                 partsIds = ids,
@@ -93,7 +92,6 @@ class ConfiguratorViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
-    // основная логика фильтрации совместимости
     private fun filterParts(
         all: List<BikePart>,
         build: Map<PartType, BikePart?>,

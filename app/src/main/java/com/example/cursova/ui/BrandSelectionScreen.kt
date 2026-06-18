@@ -40,7 +40,7 @@ fun BrandSelectionScreen(
 
         Spacer(modifier = Modifier.height(60.dp))
 
-        // Бренд 1: Specialized
+        // Бренд Specialized
         BrandItem(
             logoName = "logo_specialized",
             brandName = "SPECIALIZED",
@@ -49,18 +49,18 @@ fun BrandSelectionScreen(
         
         Spacer(modifier = Modifier.height(20.dp))
         
-        // Бренд 2: Santa Cruz
+        // Бренд Santa Cruz
         BrandItem(
-            logoName = "logo_santacruz", // Если логотипа нет, будет просто текст
+            logoName = "logo_santacruz", // Если логотипа нет будет просто текст
             brandName = "SANTA CRUZ",
             onClick = { onBrandSelected("Santa Cruz") }
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Бренд 3: Nukeproof
+        // Бренд Nukeproof
         BrandItem(
-            logoName = "logo_nukeproof", // Если логотипа нет, будет просто текст
+            logoName = "logo_nukeproof",
             brandName = "NUKEPROOF",
             onClick = { onBrandSelected("Nukeproof") }
         )
@@ -69,7 +69,7 @@ fun BrandSelectionScreen(
 
         // Бренд 4: Transition
         BrandItem(
-            logoName = "logo_transition", // Если логотипа нет, будет просто текст
+            logoName = "logo_transition",
             brandName = "TRANSITION",
             onClick = { onBrandSelected("Transition") }
         )
@@ -99,7 +99,7 @@ fun BrandItem(logoName: String, brandName: String, onClick: () -> Unit) {
                     .padding(horizontal = 32.dp)
             )
         } else {
-            // фоллбек, если картинки нет (для отладки или если нет лого)
+            // фоллбек, если картинки нет для отладки или если нет лого
             Text(brandName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
         }
     }
